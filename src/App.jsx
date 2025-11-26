@@ -42,7 +42,7 @@ const App = () => {
     };
   }, []);
 
-  // Función descargar
+  // Función descargar mejorada para móviles
   const handleDownload = async () => {
     if (!previewRef.current || !window.html2canvas) {
         alert("El generador se está cargando, intenta de nuevo en un segundo.");
@@ -50,14 +50,19 @@ const App = () => {
     }
 
     try {
+      // Calculamos una escala mayor si estamos en móvil para asegurar calidad HD
+      const isMobile = window.innerWidth < 640;
+      const qualityScale = isMobile ? 3 : 2; 
+
       const canvas = await window.html2canvas(previewRef.current, {
-        scale: 2,
+        scale: qualityScale,
         // Fondo azul corporativo si no hay imagen
         backgroundColor: bgImage ? null : '#133157',
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: 540,
+        // Si quieres forzar un ancho específico de salida podrías usar width: 540,
+        // pero dejarlo automático con escala suele dar mejores resultados responsive.
         height: previewRef.current.scrollHeight 
       });
       const link = document.createElement('a');
@@ -144,15 +149,16 @@ const App = () => {
       {/* Header */}
       <header className="bg-white shadow-sm mb-6 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2" style={{ color: brandColor }}>
-                <Camera className="w-6 h-6" /> Resumen de Pista
+            <h1 className="text-lg md:text-2xl font-bold flex items-center gap-2" style={{ color: brandColor }}>
+                <Camera className="w-5 h-5 md:w-6 md:h-6" /> Resumen de Pista
             </h1>
             <button 
                 onClick={handleDownload}
-                className="text-white px-4 py-2 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all hover:opacity-90"
+                className="text-white px-3 py-2 md:px-4 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all hover:opacity-90 text-sm md:text-base"
                 style={{ backgroundColor: brandColor }}
             >
                 <Download size={18} /> <span className="hidden md:inline">Descargar JPG</span>
+                <span className="inline md:hidden">Bajar</span>
             </button>
         </div>
       </header>
@@ -160,7 +166,7 @@ const App = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 px-4 relative">
         
         {/* COLUMNA IZQUIERDA: EDITOR */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-6 order-2 lg:order-1">
           
           {/* 1. Textos */}
           <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
@@ -325,17 +331,18 @@ const App = () => {
 
         </div>
 
-        {/* COLUMNA DERECHA: VISUALIZADOR (Sticky) */}
-        <div className="lg:col-span-7 flex flex-col items-center lg:sticky lg:top-24 lg:self-start">
+        {/* COLUMNA DERECHA: VISUALIZADOR (Sticky en desktop, Top en mobile) */}
+        <div className="lg:col-span-7 flex flex-col items-center lg:sticky lg:top-24 lg:self-start order-1 lg:order-2 mb-8 lg:mb-0">
             <h2 className="text-sm font-bold text-gray-400 uppercase mb-2 text-center w-full">Vista Previa</h2>
-            <div className="rounded-xl overflow-x-auto overflow-y-hidden shadow-2xl border-4 border-gray-800 bg-gray-800 flex justify-center pb-2 w-full max-w-full">
+            <div className="rounded-xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-gray-800 flex justify-center w-full max-w-full">
                 <div 
                     ref={previewRef}
-                    className="relative flex-shrink-0 flex flex-col items-center px-6 py-8 box-border"
+                    className="relative flex-shrink-0 flex flex-col items-center px-4 py-6 sm:px-6 sm:py-8 box-border mx-auto"
                     style={{
-                        width: '540px',
-                        minHeight: '675px', 
-                        height: 'auto',
+                        width: '100%', // Ancho fluido
+                        maxWidth: '540px', // Tope máximo para que no se estire demasiado
+                        minHeight: 'auto', 
+                        aspectRatio: '4/5', // Mantiene la proporción de placa vertical
                         // FONDO ACTUALIZADO CON DEGRADADO AZUL
                         backgroundImage: bgImage ? `url(${bgImage})` : 'linear-gradient(135deg, #1a4275 0%, #133157 40%, #0a1c30 100%)',
                         backgroundSize: 'cover',
@@ -348,40 +355,40 @@ const App = () => {
                         <div className="absolute inset-0 opacity-5 pointer-events-none h-full" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`}} />
                     )}
                     
-                    {/* TÍTULO PRINCIPAL */}
-                    <h1 className="relative z-10 text-white text-4xl font-bold mb-3 drop-shadow-md text-center w-full tracking-tight leading-tight">{mainTitle}</h1>
+                    {/* TÍTULO PRINCIPAL RESPONSIVE */}
+                    <h1 className="relative z-10 text-white text-2xl sm:text-4xl font-bold mb-2 sm:mb-3 drop-shadow-md text-center w-full tracking-tight leading-tight">{mainTitle}</h1>
 
-                    {/* UBICACIÓN */}
+                    {/* UBICACIÓN RESPONSIVE */}
                     {location && (
-                        <p className="relative z-10 text-white/90 text-lg font-medium mb-8 drop-shadow-md text-center w-full flex items-center justify-center gap-1">
+                        <p className="relative z-10 text-white/90 text-sm sm:text-lg font-medium mb-4 sm:mb-8 drop-shadow-md text-center w-full flex items-center justify-center gap-1">
                             📍 {location}
                         </p>
                     )}
 
-                    {/* LOGOS */}
-                    <div className={`relative z-10 w-full flex items-center mb-8 h-24 px-2 gap-4 ${logos.length <= 1 ? 'justify-center' : 'justify-between'}`}>
+                    {/* LOGOS RESPONSIVE */}
+                    <div className={`relative z-10 w-full flex items-center mb-4 sm:mb-8 h-16 sm:h-24 px-2 gap-2 sm:gap-4 ${logos.length <= 1 ? 'justify-center' : 'justify-between'}`}>
                         {logos.map((logo) => (
                           <div key={logo.id} className="flex-1 flex justify-center items-center h-full max-w-[33%]">
                               {logo.src ? (
                                   <img src={logo.src} alt="Logo" className="max-h-full max-w-full object-contain drop-shadow-lg" />
                               ) : (
                                   <div className="flex flex-col items-center justify-center opacity-70 scale-90">
-                                      <div className="bg-white/10 p-3 rounded-full mb-1 border-2 border-dashed border-white/30">
-                                          <ImageIcon className="text-white/80 w-8 h-8" />
+                                      <div className="bg-white/10 p-2 sm:p-3 rounded-full mb-1 border-2 border-dashed border-white/30">
+                                          <ImageIcon className="text-white/80 w-6 h-6 sm:w-8 sm:h-8" />
                                       </div>
-                                      <p className="text-white/60 text-[9px] uppercase font-bold tracking-widest">Logo</p>
+                                      <p className="text-white/60 text-[8px] sm:text-[9px] uppercase font-bold tracking-widest">Logo</p>
                                   </div>
                               )}
                           </div>
                         ))}
                     </div>
 
-                    {/* SUBTÍTULO */}
-                    <h2 className="relative z-10 text-white text-2xl font-semibold mb-5 drop-shadow-md text-center w-full">{subTitle}</h2>
+                    {/* SUBTÍTULO RESPONSIVE */}
+                    <h2 className="relative z-10 text-white text-xl sm:text-2xl font-semibold mb-3 sm:mb-5 drop-shadow-md text-center w-full">{subTitle}</h2>
 
-                    {/* TABLA PRINCIPAL */}
+                    {/* TABLA PRINCIPAL RESPONSIVE */}
                     <div className="relative z-10 w-full flex flex-col justify-start">
-                        <div className="w-full border-2 border-white/90 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-[4px] shadow-2xl">
+                        <div className="w-full border-2 border-white/90 rounded-xl sm:rounded-2xl overflow-hidden bg-white/5 backdrop-blur-[4px] shadow-2xl">
                             
                             <table className="w-full border-collapse table-fixed">
                                 <colgroup>
@@ -404,39 +411,39 @@ const App = () => {
                                 </colgroup>
 
                                 <thead>
-                                    <tr className="bg-white/10 text-white font-semibold text-lg border-b-2 border-white/90">
+                                    <tr className="bg-white/10 text-white font-semibold text-sm sm:text-lg border-b-2 border-white/90">
                                         {showCategory && (
-                                            <th className="relative border-r-2 border-white/90 h-12"
+                                            <th className="relative border-r-2 border-white/90 h-10 sm:h-12"
                                                 style={{
                                                     background: 'repeating-linear-gradient(135deg, transparent, transparent 5px, rgba(255,255,255,0.2) 5px, rgba(255,255,255,0.2) 8px)'
                                                 }}
                                             ></th>
                                         )}
-                                        <th className="border-r-2 border-white/90 py-2">Kg</th>
-                                        <th className="border-r-2 border-white/90 py-2">Min</th>
-                                        <th className="border-r-2 border-white/90 py-2">Max</th>
-                                        <th className="py-2">Prom.</th>
+                                        <th className="border-r-2 border-white/90 py-1 sm:py-2">Kg</th>
+                                        <th className="border-r-2 border-white/90 py-1 sm:py-2">Min</th>
+                                        <th className="border-r-2 border-white/90 py-1 sm:py-2">Max</th>
+                                        <th className="py-1 sm:py-2">Prom.</th>
                                     </tr>
                                 </thead>
 
-                                <tbody className="text-white text-lg font-normal leading-tight">
+                                <tbody className="text-white text-xs sm:text-lg font-normal leading-tight">
                                     {rows.map((row, index) => (
                                         <tr key={row.id} className={`${index !== rows.length - 1 ? 'border-b border-white/40' : ''}`}>
                                             {showCategory && (
-                                                <td className="border-r-2 border-white/40 py-2 px-2 text-center text-base leading-tight break-words align-middle">
+                                                <td className="border-r-2 border-white/40 py-1 sm:py-2 px-1 sm:px-2 text-center text-xs sm:text-base leading-tight break-words align-middle">
                                                     {row.category}
                                                 </td>
                                             )}
-                                            <td className="border-r-2 border-white/40 py-2 text-center align-middle">
+                                            <td className="border-r-2 border-white/40 py-1 sm:py-2 text-center align-middle">
                                                 {row.range}
                                             </td>
-                                            <td className="border-r-2 border-white/40 py-2 text-center align-middle">
+                                            <td className="border-r-2 border-white/40 py-1 sm:py-2 text-center align-middle">
                                                 {row.min}
                                             </td>
-                                            <td className="border-r-2 border-white/40 py-2 text-center align-middle">
+                                            <td className="border-r-2 border-white/40 py-1 sm:py-2 text-center align-middle">
                                                 {row.max}
                                             </td>
-                                            <td className="py-2 text-center align-middle">
+                                            <td className="py-1 sm:py-2 text-center align-middle">
                                                 {row.avg}
                                             </td>
                                         </tr>
@@ -447,7 +454,7 @@ const App = () => {
                         </div>
                     </div>
                     
-                    <div className="relative z-10 mt-auto pt-8 text-white/60 text-[9px] uppercase tracking-widest text-center w-full font-semibold shadow-black drop-shadow-md">
+                    <div className="relative z-10 mt-auto pt-4 sm:pt-8 text-white/60 text-[8px] sm:text-[9px] uppercase tracking-widest text-center w-full font-semibold shadow-black drop-shadow-md">
                         Todos los valores expresados son en ARS
                     </div>
 
