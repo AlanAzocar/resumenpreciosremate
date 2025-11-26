@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+// Nota: Usamos carga dinámica para asegurar que funcione en todos los entornos
 import { Camera, Download, Plus, Trash2, Upload, Image as ImageIcon, X, LayoutTemplate, Columns, MapPin } from 'lucide-react';
 
 const App = () => {
   const previewRef = useRef(null);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   // Estados para los textos
   const [mainTitle, setMainTitle] = useState('Resumen de Precios');
@@ -31,14 +31,12 @@ const App = () => {
     { id: 4, category: 'Novillos', range: '260 a 300', min: '5250', max: '5500', avg: '5375' },
   ]);
 
-  // Cargar html2canvas
+  // Cargar librería de imagen automáticamente
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     script.async = true;
-    script.onload = () => setIsScriptLoaded(true);
     document.body.appendChild(script);
-
     return () => {
       document.body.removeChild(script);
     };
@@ -47,13 +45,15 @@ const App = () => {
   // Función descargar
   const handleDownload = async () => {
     if (!previewRef.current || !window.html2canvas) {
-      alert("Cargando generador...");
-      return;
+        alert("El generador se está cargando, intenta de nuevo en un segundo.");
+        return;
     }
+
     try {
       const canvas = await window.html2canvas(previewRef.current, {
         scale: 2,
-        backgroundColor: bgImage ? null : '#064e3b',
+        // Fondo azul corporativo si no hay imagen
+        backgroundColor: bgImage ? null : '#133157',
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -61,7 +61,7 @@ const App = () => {
         height: previewRef.current.scrollHeight 
       });
       const link = document.createElement('a');
-      link.download = `placa-${new Date().getTime()}.jpg`;
+      link.download = `resumen-pista-${new Date().getTime()}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     } catch (error) {
@@ -105,22 +105,18 @@ const App = () => {
     }
   };
 
-  // --- LOGICA TABLA (CÁLCULO AUTOMÁTICO DE PROMEDIO) ---
+  // --- LOGICA TABLA (Promedio Automático) ---
   const updateRow = (id, field, value) => {
     setRows(rows.map(row => {
       if (row.id === id) {
         const updatedRow = { ...row, [field]: value };
-        
         // Si cambiamos Min o Max, intentamos calcular el promedio
         if (field === 'min' || field === 'max') {
-          // Obtenemos los valores actuales (el nuevo valor ingresado o el que ya estaba)
           const rawMin = field === 'min' ? value : row.min;
           const rawMax = field === 'max' ? value : row.max;
-          
           const valMin = parseFloat(rawMin);
           const valMax = parseFloat(rawMax);
 
-          // Solo calculamos si ambos son números válidos
           if (!isNaN(valMin) && !isNaN(valMax)) {
             updatedRow.avg = Math.round((valMin + valMax) / 2).toString();
           }
@@ -139,19 +135,22 @@ const App = () => {
     setRows(rows.filter(row => row.id !== id));
   };
 
+  // Color corporativo principal
+  const brandColor = '#133157';
+
   return (
     <div className="min-h-screen bg-gray-100 font-sans text-gray-800 pb-20">
       
       {/* Header */}
       <header className="bg-white shadow-sm mb-6 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-xl md:text-2xl font-bold text-green-800 flex items-center gap-2">
-            <Camera className="w-6 h-6" /> Generador Flexible
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2" style={{ color: brandColor }}>
+                <Camera className="w-6 h-6" /> Resumen de Pista
             </h1>
             <button 
                 onClick={handleDownload}
-                disabled={!isScriptLoaded}
-                className={`bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all ${!isScriptLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="text-white px-4 py-2 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all hover:opacity-90"
+                style={{ backgroundColor: brandColor }}
             >
                 <Download size={18} /> <span className="hidden md:inline">Descargar JPG</span>
             </button>
@@ -165,11 +164,11 @@ const App = () => {
           
           {/* 1. Textos */}
           <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-bold mb-4 text-gray-700 border-b pb-2">Textos Principales</h2>
+            <h2 className="text-lg font-bold mb-4 border-b pb-2" style={{ color: brandColor }}>Textos Principales</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Título Principal</label>
-                <input type="text" value={mainTitle} onChange={(e) => setMainTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none" />
+                <input type="text" value={mainTitle} onChange={(e) => setMainTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-900" />
               </div>
               
               {/* CAMPO DE UBICACIÓN */}
@@ -181,7 +180,7 @@ const App = () => {
                         type="text" 
                         value={location} 
                         onChange={(e) => setLocation(e.target.value)} 
-                        className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none" 
+                        className="w-full pl-8 p-2 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-900" 
                         placeholder="Ej: General Acha, La Pampa"
                     />
                 </div>
@@ -189,14 +188,14 @@ const App = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subtítulo (Categoría)</label>
-                <input type="text" value={subTitle} onChange={(e) => setSubTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none" />
+                <input type="text" value={subTitle} onChange={(e) => setSubTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-900" />
               </div>
             </div>
           </div>
 
           {/* 2. Fondo */}
           <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-bold mb-4 text-gray-700 border-b pb-2 flex items-center gap-2">
+            <h2 className="text-lg font-bold mb-4 border-b pb-2 flex items-center gap-2" style={{ color: brandColor }}>
                 <ImageIcon size={18} /> Fondo
             </h2>
             <div className="flex flex-col gap-3">
@@ -206,8 +205,8 @@ const App = () => {
                         <button onClick={() => setBgImage(null)} className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full shadow-lg hover:bg-red-700"><Trash2 size={16} /></button>
                     </div>
                 ) : (
-                    <label className="w-full flex flex-col items-center justify-center px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-green-50 group">
-                        <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-green-600 mb-2" />
+                    <label className="w-full flex flex-col items-center justify-center px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-blue-50 group">
+                        <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-blue-800 mb-2 transition-colors" />
                         <span className="text-sm text-gray-600">Subir Fondo</span>
                         <input type='file' className="hidden" onChange={handleBgUpload} accept="image/*" />
                     </label>
@@ -218,19 +217,23 @@ const App = () => {
           {/* 3. Logos */}
           <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
             <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h2 className="text-lg font-bold text-gray-700">Logos</h2>
-              <button onClick={addLogo} className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition">
+              <h2 className="text-lg font-bold" style={{ color: brandColor }}>Logos</h2>
+              <button 
+                onClick={addLogo} 
+                className="bg-blue-50 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition hover:bg-blue-100"
+                style={{ color: brandColor }}
+              >
                 <Plus size={14} /> AGREGAR
               </button>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {logos.map((logo, idx) => (
                 <div key={logo.id} className="relative group">
-                  <div className="w-full aspect-square bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden hover:border-green-500 transition-colors">
+                  <div className="w-full aspect-square bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden transition-colors hover:border-blue-300">
                     {logo.src ? (
                       <img src={logo.src} alt={`Logo ${idx}`} className="w-full h-full object-contain p-2" />
                     ) : (
-                      <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-green-600">
+                      <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-blue-600">
                         <Upload size={18} />
                         <span className="text-[9px] mt-1 font-bold">SUBIR</span>
                         <input type="file" className="hidden" accept="image/*" onChange={(e) => handleLogoUpload(e, logo.id)} />
@@ -252,8 +255,12 @@ const App = () => {
           <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
             <div className="flex flex-col gap-4 mb-4 border-b pb-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-700">Precios</h2>
-                    <button onClick={addRow} className="bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition">
+                    <h2 className="text-lg font-bold" style={{ color: brandColor }}>Precios</h2>
+                    <button 
+                        onClick={addRow} 
+                        className="bg-blue-50 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition hover:bg-blue-100"
+                        style={{ color: brandColor }}
+                    >
                         <Plus size={14} /> AGREGAR
                     </button>
                 </div>
@@ -267,7 +274,10 @@ const App = () => {
                             checked={showCategory}
                             onChange={(e) => setShowCategory(e.target.checked)}
                         />
-                        <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        <div 
+                            className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"
+                            style={{ backgroundColor: showCategory ? brandColor : undefined }}
+                        ></div>
                     </label>
                     <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
                         <Columns size={16} />
@@ -294,7 +304,6 @@ const App = () => {
                       {showCategory && (
                           <td className="p-1"><textarea rows="1" value={row.category} onChange={(e) => updateRow(row.id, 'category', e.target.value)} className="w-full min-w-[100px] p-1 border rounded resize-y" placeholder="Ej: Novillos" /></td>
                       )}
-                      {/* CAMPO DE RANGO (Kg) AJUSTADO */}
                       <td className="p-1">
                           <input 
                             type="text" 
@@ -303,10 +312,9 @@ const App = () => {
                             className="w-full min-w-[110px] text-center p-1 border rounded" 
                           />
                       </td>
-                      {/* CAMPOS DE VALORES AUMENTADOS */}
                       <td className="p-1"><input type="text" value={row.min} onChange={(e) => updateRow(row.id, 'min', e.target.value)} className="w-full min-w-[75px] text-center p-1 border rounded" /></td>
                       <td className="p-1"><input type="text" value={row.max} onChange={(e) => updateRow(row.id, 'max', e.target.value)} className="w-full min-w-[75px] text-center p-1 border rounded" /></td>
-                      <td className="p-1"><input type="text" value={row.avg} onChange={(e) => updateRow(row.id, 'avg', e.target.value)} className="w-full min-w-[75px] text-center p-1 border rounded font-bold text-green-700" /></td>
+                      <td className="p-1"><input type="text" value={row.avg} onChange={(e) => updateRow(row.id, 'avg', e.target.value)} className="w-full min-w-[75px] text-center p-1 border rounded font-bold" style={{ color: brandColor }} /></td>
                       <td className="p-1 text-center"><button onClick={() => deleteRow(row.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button></td>
                     </tr>
                   ))}
@@ -326,9 +334,10 @@ const App = () => {
                     className="relative flex-shrink-0 flex flex-col items-center px-6 py-8 box-border"
                     style={{
                         width: '540px',
-                        minHeight: '675px', // Mínimo de altura (formato Instagram)
-                        height: 'auto',     // Crece si es necesario
-                        backgroundImage: bgImage ? `url(${bgImage})` : 'linear-gradient(135deg, #0e5e3a 0%, #064e3b 40%, #022c22 100%)',
+                        minHeight: '675px', 
+                        height: 'auto',
+                        // FONDO ACTUALIZADO CON DEGRADADO AZUL
+                        backgroundImage: bgImage ? `url(${bgImage})` : 'linear-gradient(135deg, #1a4275 0%, #133157 40%, #0a1c30 100%)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat'
@@ -370,7 +379,7 @@ const App = () => {
                     {/* SUBTÍTULO */}
                     <h2 className="relative z-10 text-white text-2xl font-semibold mb-5 drop-shadow-md text-center w-full">{subTitle}</h2>
 
-                    {/* TABLA PRINCIPAL - SIN FLEX-GROW PARA QUE SE AJUSTE AL CONTENIDO */}
+                    {/* TABLA PRINCIPAL */}
                     <div className="relative z-10 w-full flex flex-col justify-start">
                         <div className="w-full border-2 border-white/90 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-[4px] shadow-2xl">
                             
@@ -396,7 +405,6 @@ const App = () => {
 
                                 <thead>
                                     <tr className="bg-white/10 text-white font-semibold text-lg border-b-2 border-white/90">
-                                        {/* Si hay categoría, mostramos la celda rayada */}
                                         {showCategory && (
                                             <th className="relative border-r-2 border-white/90 h-12"
                                                 style={{
